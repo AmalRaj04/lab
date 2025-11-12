@@ -1,0 +1,163 @@
+// server.js
+const express = require('express');
+const cors = require('cors');
+const app = express();
+const PORT = 5000;
+
+app.use(cors());
+app.use(express.json());
+
+// Sample quiz questions
+const questions = [
+  { id: 1, question: "What is 2 + 2?", options: ["3", "4", "5", "6"], answer: "4" },
+  { id: 2, question: "What is the capital of France?", options: ["Berlin", "London", "Paris", "Rome"], answer: "Paris" },
+  { id: 3, question: "Which is a programming language?", options: ["HTML", "CSS", "JavaScript", "Photoshop"], answer: "JavaScript" },
+  { id: 4, question: "What color do you get by mixing red and blue?", options: ["Green", "Purple", "Orange", "Brown"], answer: "Purple" },
+  { id: 5, question: "What is the boiling point of water?", options: ["90°C", "100°C", "80°C", "120°C"], answer: "100°C" }
+];
+
+// API to get all questions (without revealing answers)
+app.get('/api/questions', (req, res) => {
+  const safeQuestions = questions.map(q => ({
+    id: q.id,
+    question: q.question,
+    options: q.options
+  }));
+  res.json(safeQuestions);
+});
+
+// API to submit answers and get score
+app.post('/api/submit', (req, res) => {
+  const userAnswers = req.body.answers; // { id: selectedOption }
+  let score = 0;
+  questions.forEach(q => {
+    if (userAnswers[q.id] && userAnswers[q.id] === q.answer) score++;
+  });
+  res.json({ score });
+});
+
+app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
+
+
+
+// App.js
+import React, { useEffect, useState } from "react";
+import "./styles.css";
+
+function App() {
+  const [questions, setQuestions] = useState([]);
+  const [answers, setAnswers] = useState({});
+  const [score, setScore] = useState(null);
+
+  useEffect(() => {
+    fetch("http://localhost:5000/api/questions")
+      .then(res => res.json())
+      .then(data => setQuestions(data));
+  }, []);
+
+  const handleChange = (qId, option) => {
+    setAnswers({ ...answers, [qId]: option });
+  };
+
+  const handleSubmit = () => {
+    fetch("http://localhost:5000/api/submit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ answers })
+    })
+      .then(res => res.json())
+      .then(data => setScore(data.score));
+  };
+
+  return (
+    <div className="container">
+      <h1>Online Quiz</h1>
+      {questions.map(q => (
+        <div key={q.id} className="question-card">
+          <h3>{q.question}</h3>
+          {q.options.map(option => (
+            <label key={option}>
+              <input
+                type="radio"
+                name={`q${q.id}`}
+                value={option}
+                checked={answers[q.id] === option}
+                onChange={() => handleChange(q.id, option)}
+              />
+              {option}
+            </label>
+          ))}
+        </div>
+      ))}
+      <button onClick={handleSubmit}>Submit</button>
+      {score !== null && <p className="score">Your score: {score} / {questions.length}</p>}
+    </div>
+  );
+}
+
+export default App;
+
+
+
+
+/* styles.css */
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f0f0f0;
+  margin: 0;
+  padding: 0;
+}
+
+.container {
+  max-width: 600px;
+  margin: 30px auto;
+  padding: 20px;
+  background: white;
+  border-radius: 8px;
+  text-align: left;
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.question-card {
+  margin-bottom: 15px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+label {
+  display: block;
+  margin: 5px 0;
+  cursor: pointer;
+}
+
+button {
+  display: block;
+  margin: 20px auto;
+  padding: 8px 16px;
+  cursor: pointer;
+}
+
+.score {
+  text-align: center;
+  font-weight: bold;
+  color: green;
+}
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Online Quiz</title>
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
+

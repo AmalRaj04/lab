@@ -1,0 +1,135 @@
+// server.js
+const express = require('express');
+const cors = require('cors');
+const app = express();
+const PORT = 5000;
+
+app.use(cors());
+app.use(express.json());
+
+// Sample events/movies
+const shows = [
+  { id: 1, title: "Avengers: Endgame", date: "2025-11-15", time: "6:00 PM" },
+  { id: 2, title: "Coldplay Concert", date: "2025-11-20", time: "8:00 PM" },
+  { id: 3, title: "The Lion King Musical", date: "2025-11-25", time: "7:30 PM" }
+];
+
+// Get all shows
+app.get('/api/shows', (req, res) => {
+  res.json(shows);
+});
+
+// Book a show
+app.post('/api/book/:id', (req, res) => {
+  const showId = parseInt(req.params.id);
+  const show = shows.find(s => s.id === showId);
+  if (show) {
+    res.json({ message: `Ticket booked for "${show.title}" on ${show.date} at ${show.time}` });
+  } else {
+    res.status(404).json({ message: "Show not found" });
+  }
+});
+
+app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
+
+
+
+// App.js
+import React, { useEffect, useState } from "react";
+import "./styles.css";
+
+function App() {
+  const [shows, setShows] = useState([]);
+  const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    fetch("http://localhost:5000/api/shows")
+      .then(res => res.json())
+      .then(data => setShows(data));
+  }, []);
+
+  const handleBook = (id) => {
+    fetch(`http://localhost:5000/api/book/${id}`, { method: "POST" })
+      .then(res => res.json())
+      .then(data => setMessage(data.message));
+  };
+
+  return (
+    <div className="container">
+      <h1>Online Ticket Booking</h1>
+      {message && <p className="message">{message}</p>}
+      <div className="show-list">
+        {shows.map(show => (
+          <div key={show.id} className="show-card">
+            <h2>{show.title}</h2>
+            <p>Date: {show.date}</p>
+            <p>Time: {show.time}</p>
+            <button onClick={() => handleBook(show.id)}>Book Ticket</button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default App;
+
+
+/* styles.css */
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f7f7f7;
+  margin: 0;
+  padding: 0;
+}
+
+.container {
+  max-width: 600px;
+  margin: 30px auto;
+  padding: 20px;
+  background: white;
+  border-radius: 8px;
+  text-align: center;
+}
+
+h1 {
+  margin-bottom: 20px;
+}
+
+.show-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.show-card {
+  border: 1px solid #ccc;
+  padding: 15px;
+  border-radius: 5px;
+}
+
+button {
+  margin-top: 10px;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+.message {
+  color: green;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Online Ticket Booking</title>
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
+

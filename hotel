@@ -1,0 +1,136 @@
+// server.js
+const express = require('express');
+const cors = require('cors');
+const app = express();
+const PORT = 5000;
+
+app.use(cors());
+app.use(express.json());
+
+// Sample rooms
+const rooms = [
+  { id: 1, type: "Single Room", price: 50 },
+  { id: 2, type: "Double Room", price: 80 },
+  { id: 3, type: "Suite", price: 150 }
+];
+
+// Get all rooms
+app.get('/api/rooms', (req, res) => {
+  res.json(rooms);
+});
+
+// Book a room
+app.post('/api/book/:id', (req, res) => {
+  const roomId = parseInt(req.params.id);
+  const room = rooms.find(r => r.id === roomId);
+  if (room) {
+    res.json({ message: `Room "${room.type}" booked for $${room.price}` });
+  } else {
+    res.status(404).json({ message: "Room not found" });
+  }
+});
+
+app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
+
+
+
+// App.js
+import React, { useEffect, useState } from "react";
+import "./styles.css";
+
+function App() {
+  const [rooms, setRooms] = useState([]);
+  const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    fetch("http://localhost:5000/api/rooms")
+      .then(res => res.json())
+      .then(data => setRooms(data));
+  }, []);
+
+  const handleBook = (id) => {
+    fetch(`http://localhost:5000/api/book/${id}`, { method: "POST" })
+      .then(res => res.json())
+      .then(data => setMessage(data.message));
+  };
+
+  return (
+    <div className="container">
+      <h1>Hotel Booking</h1>
+      {message && <p className="message">{message}</p>}
+      <div className="room-list">
+        {rooms.map(room => (
+          <div key={room.id} className="room-card">
+            <h2>{room.type}</h2>
+            <p>Price: ${room.price}</p>
+            <button onClick={() => handleBook(room.id)}>Book</button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default App;
+
+
+
+/* styles.css */
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f5f5f5;
+  margin: 0;
+  padding: 0;
+}
+
+.container {
+  max-width: 600px;
+  margin: 30px auto;
+  padding: 20px;
+  background: white;
+  border-radius: 8px;
+  text-align: center;
+}
+
+h1 {
+  margin-bottom: 20px;
+}
+
+.room-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.room-card {
+  border: 1px solid #ccc;
+  padding: 15px;
+  border-radius: 5px;
+}
+
+button {
+  margin-top: 10px;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+.message {
+  color: green;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Hotel Booking</title>
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
+
+

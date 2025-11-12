@@ -1,0 +1,136 @@
+// server.js
+const express = require('express');
+const cors = require('cors');
+const app = express();
+const PORT = 5000;
+
+app.use(cors());
+app.use(express.json());
+
+// Sample food items
+const foods = [
+  { id: 1, name: "Pizza", price: 8 },
+  { id: 2, name: "Burger", price: 5 },
+  { id: 3, name: "Pasta", price: 7 },
+  { id: 4, name: "Salad", price: 4 }
+];
+
+// Get all food items
+app.get('/api/foods', (req, res) => {
+  res.json(foods);
+});
+
+// Order a food item
+app.post('/api/order/:id', (req, res) => {
+  const foodId = parseInt(req.params.id);
+  const food = foods.find(f => f.id === foodId);
+  if (food) {
+    res.json({ message: `You ordered "${food.name}" for $${food.price}` });
+  } else {
+    res.status(404).json({ message: "Food item not found" });
+  }
+});
+
+app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
+
+
+
+// App.js
+import React, { useEffect, useState } from "react";
+import "./styles.css";
+
+function App() {
+  const [foods, setFoods] = useState([]);
+  const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    fetch("http://localhost:5000/api/foods")
+      .then(res => res.json())
+      .then(data => setFoods(data));
+  }, []);
+
+  const handleOrder = (id) => {
+    fetch(`http://localhost:5000/api/order/${id}`, { method: "POST" })
+      .then(res => res.json())
+      .then(data => setMessage(data.message));
+  };
+
+  return (
+    <div className="container">
+      <h1>Food Delivery</h1>
+      {message && <p className="message">{message}</p>}
+      <div className="food-list">
+        {foods.map(food => (
+          <div key={food.id} className="food-card">
+            <p>{food.name}</p>
+            <p>${food.price}</p>
+            <button onClick={() => handleOrder(food.id)}>Order</button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default App;
+
+
+
+
+/* styles.css */
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f7f7f7;
+  margin: 0;
+  padding: 0;
+}
+
+.container {
+  max-width: 600px;
+  margin: 30px auto;
+  padding: 20px;
+  background: white;
+  border-radius: 8px;
+  text-align: center;
+}
+
+h1 {
+  margin-bottom: 20px;
+}
+
+.food-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.food-card {
+  border: 1px solid #ccc;
+  padding: 15px;
+  border-radius: 5px;
+}
+
+button {
+  margin-top: 10px;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+.message {
+  color: green;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Food Delivery</title>
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>

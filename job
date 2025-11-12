@@ -1,0 +1,137 @@
+// server.js
+const express = require('express');
+const cors = require('cors');
+const app = express();
+const PORT = 5000;
+
+app.use(cors());
+app.use(express.json());
+
+// Sample job listings
+const jobs = [
+  { id: 1, title: "Frontend Developer", company: "TechCorp" },
+  { id: 2, title: "Backend Developer", company: "WebSolutions" },
+  { id: 3, title: "Data Analyst", company: "DataWorks" },
+  { id: 4, title: "UI/UX Designer", company: "DesignHub" }
+];
+
+// Get all jobs
+app.get('/api/jobs', (req, res) => {
+  res.json(jobs);
+});
+
+// Apply for a job
+app.post('/api/apply/:id', (req, res) => {
+  const jobId = parseInt(req.params.id);
+  const job = jobs.find(j => j.id === jobId);
+  if (job) {
+    res.json({ message: `Applied for "${job.title}" at ${job.company}` });
+  } else {
+    res.status(404).json({ message: "Job not found" });
+  }
+});
+
+app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
+
+
+
+// App.js
+import React, { useEffect, useState } from "react";
+import "./styles.css";
+
+function App() {
+  const [jobs, setJobs] = useState([]);
+  const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    fetch("http://localhost:5000/api/jobs")
+      .then(res => res.json())
+      .then(data => setJobs(data));
+  }, []);
+
+  const handleApply = (id) => {
+    fetch(`http://localhost:5000/api/apply/${id}`, { method: "POST" })
+      .then(res => res.json())
+      .then(data => setMessage(data.message));
+  };
+
+  return (
+    <div className="container">
+      <h1>Job Portal</h1>
+      {message && <p className="message">{message}</p>}
+      <div className="job-list">
+        {jobs.map(job => (
+          <div key={job.id} className="job-card">
+            <h2>{job.title}</h2>
+            <p>Company: {job.company}</p>
+            <button onClick={() => handleApply(job.id)}>Apply</button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default App;
+
+
+
+
+/* styles.css */
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f7f7f7;
+  margin: 0;
+  padding: 0;
+}
+
+.container {
+  max-width: 600px;
+  margin: 30px auto;
+  padding: 20px;
+  background: white;
+  border-radius: 8px;
+  text-align: center;
+}
+
+h1 {
+  margin-bottom: 20px;
+}
+
+.job-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.job-card {
+  border: 1px solid #ccc;
+  padding: 15px;
+  border-radius: 5px;
+}
+
+button {
+  margin-top: 10px;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+.message {
+  color: green;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Job Portal</title>
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>

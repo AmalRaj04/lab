@@ -1,0 +1,177 @@
+import React, { useState, useEffect } from "react";
+import "./styles.css";
+
+function App() {
+  const [notes, setNotes] = useState([]);
+  const [text, setText] = useState("");
+  const [editIndex, setEditIndex] = useState(null);
+
+  useEffect(() => {
+    fetch("http://localhost:5000/notes")
+      .then(res => res.json())
+      .then(data => setNotes(data));
+  }, []);
+
+  const handleAdd = () => {
+    if (text.trim() === "") return;
+    const method = editIndex !== null ? "PUT" : "POST";
+    const body = { text, index: editIndex };
+
+    fetch("http://localhost:5000/notes", {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    })
+      .then(res => res.json())
+      .then(data => {
+        setNotes(data);
+        setText("");
+        setEditIndex(null);
+      });
+  };
+
+  const handleEdit = (index) => {
+    setText(notes[index]);
+    setEditIndex(index);
+  };
+
+  const handleDelete = (index) => {
+    fetch(`http://localhost:5000/notes/${index}`, { method: "DELETE" })
+      .then(res => res.json())
+      .then(data => setNotes(data));
+  };
+
+  return (
+    <div className="container">
+      <h1>📝 Notes App</h1>
+      <div className="input-area">
+        <input
+          type="text"
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder="Enter note..."
+        />
+        <button onClick={handleAdd}>{editIndex !== null ? "Update" : "Add"}</button>
+      </div>
+      <ul>
+        {notes.map((note, i) => (
+          <li key={i}>
+            {note}
+            <div>
+              <button onClick={() => handleEdit(i)}>Edit</button>
+              <button onClick={() => handleDelete(i)}>Delete</button>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+export default App;
+
+
+
+const express = require("express");
+const cors = require("cors");
+const app = express();
+
+app.use(cors());
+app.use(express.json());
+
+let notes = [];
+
+app.get("/notes", (req, res) => {
+  res.json(notes);
+});
+
+app.post("/notes", (req, res) => {
+  const { text } = req.body;
+  notes.push(text);
+  res.json(notes);
+});
+
+app.put("/notes", (req, res) => {
+  const { text, index } = req.body;
+  notes[index] = text;
+  res.json(notes);
+});
+
+app.delete("/notes/:index", (req, res) => {
+  const { index } = req.params;
+  notes.splice(index, 1);
+  res.json(notes);
+});
+
+app.listen(5000, () => console.log("Server running on port 5000"));
+
+
+
+
+
+body {
+  font-family: Arial;
+  background: #f4f4f9;
+  text-align: center;
+}
+
+.container {
+  margin-top: 50px;
+}
+
+.input-area {
+  margin-bottom: 20px;
+}
+
+input {
+  padding: 8px;
+  width: 200px;
+  margin-right: 10px;
+}
+
+button {
+  padding: 8px 12px;
+  margin: 2px;
+  border: none;
+  background-color: #007bff;
+  color: white;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+button:hover {
+  background-color: #0056b3;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+}
+
+li {
+  background: white;
+  margin: 10px auto;
+  width: 300px;
+  padding: 10px;
+  border-radius: 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Notes App</title>
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
+
+
+

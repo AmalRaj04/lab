@@ -1,0 +1,192 @@
+// server.js
+const express = require('express');
+const cors = require('cors');
+const app = express();
+const PORT = 5000;
+
+app.use(cors());
+app.use(express.json());
+
+// Sample movies data
+let movies = [
+  { id: 1, title: "The Matrix", reviews: [] },
+  { id: 2, title: "Inception", reviews: [] },
+  { id: 3, title: "Interstellar", reviews: [] }
+];
+
+// Get all movies
+app.get('/api/movies', (req, res) => {
+  res.json(movies);
+});
+
+// Submit a review
+app.post('/api/review/:id', (req, res) => {
+  const movieId = parseInt(req.params.id);
+  const { rating, text } = req.body;
+  const movie = movies.find(m => m.id === movieId);
+  if (movie) {
+    movie.reviews.push({ rating, text });
+    res.json({ message: `Review added for "${movie.title}"` });
+  } else {
+    res.status(404).json({ message: "Movie not found" });
+  }
+});
+
+app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
+
+
+
+// App.js
+import React, { useEffect, useState } from "react";
+import "./styles.css";
+
+function App() {
+  const [movies, setMovies] = useState([]);
+  const [message, setMessage] = useState("");
+  const [reviewsInput, setReviewsInput] = useState({}); // { movieId: { rating, text } }
+
+  useEffect(() => {
+    fetch("http://localhost:5000/api/movies")
+      .then(res => res.json())
+      .then(data => setMovies(data));
+  }, []);
+
+  const handleChange = (id, field, value) => {
+    setReviewsInput({
+      ...reviewsInput,
+      [id]: { ...reviewsInput[id], [field]: value }
+    });
+  };
+
+  const handleReview = (id) => {
+    const review = reviewsInput[id];
+    if (!review || !review.rating || !review.text) {
+      alert("Please enter rating and review text");
+      return;
+    }
+    fetch(`http://localhost:5000/api/review/${id}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(review)
+    })
+      .then(res => res.json())
+      .then(data => {
+        setMessage(data.message);
+        setReviewsInput({ ...reviewsInput, [id]: { rating: "", text: "" } });
+        // Refresh movie list
+        return fetch("http://localhost:5000/api/movies");
+      })
+      .then(res => res.json())
+      .then(data => setMovies(data));
+  };
+
+  return (
+    <div className="container">
+      <h1>Movie Reviews</h1>
+      {message && <p className="message">{message}</p>}
+      {movies.map(movie => (
+        <div key={movie.id} className="movie-card">
+          <h2>{movie.title}</h2>
+
+          <div className="reviews">
+            {movie.reviews.length === 0 ? (
+              <p>No reviews yet</p>
+            ) : (
+              movie.reviews.map((r, i) => (
+                <p key={i}>Rating: {r.rating} - {r.text}</p>
+              ))
+            )}
+          </div>
+
+          <div className="review-form">
+            <input
+              type="number"
+              placeholder="Rating 1-5"
+              value={reviewsInput[movie.id]?.rating || ""}
+              onChange={e => handleChange(movie.id, "rating", e.target.value)}
+            />
+            <input
+              type="text"
+              placeholder="Write review"
+              value={reviewsInput[movie.id]?.text || ""}
+              onChange={e => handleChange(movie.id, "text", e.target.value)}
+            />
+            <button onClick={() => handleReview(movie.id)}>Submit Review</button>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export default App;
+
+
+
+/* styles.css */
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f2f2f2;
+  margin: 0;
+  padding: 0;
+}
+
+.container {
+  max-width: 600px;
+  margin: 30px auto;
+  padding: 20px;
+  background: white;
+  border-radius: 8px;
+  text-align: center;
+}
+
+h1 {
+  margin-bottom: 20px;
+}
+
+.movie-card {
+  border: 1px solid #ccc;
+  padding: 15px;
+  margin-bottom: 15px;
+  border-radius: 5px;
+  text-align: left;
+}
+
+.reviews p {
+  margin: 3px 0;
+}
+
+.review-form {
+  margin-top: 10px;
+}
+
+.review-form input {
+  margin: 5px 5px 5px 0;
+  padding: 5px;
+}
+
+.review-form button {
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+.message {
+  color: green;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Movie Review</title>
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
+
